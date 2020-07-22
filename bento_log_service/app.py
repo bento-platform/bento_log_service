@@ -128,38 +128,38 @@ def _log_bytes_endpoint(log_dict: dict, service: str, log: str):
         return application.response_class(status=500)
 
 
-@flask_permissions_owner
 @application.route("/system-logs")
+@flask_permissions_owner
 def system_logs():
     return _logs_endpoint(SYSTEM_LOGS, "system-logs")
 
 
-@flask_permissions_owner
 @application.route("/system-logs/<string:service>")
+@flask_permissions_owner
 def system_service(service: str):
     return _logs_service_endpoint(SYSTEM_LOGS_DICT, service, "system-logs")
 
 
-@flask_permissions_owner
 @application.route("/system-logs/<string:service>/<string:log>")
+@flask_permissions_owner
 def system_service_log(service: str, log: str):
     return _log_bytes_endpoint(SYSTEM_LOGS_DICT, service, log)
 
 
-@flask_permissions_owner
 @application.route("/service-logs")
+@flask_permissions_owner
 def bento_logs():
     return _logs_endpoint(SERVICE_LOGS, "service-logs")
 
 
-@flask_permissions_owner
 @application.route("/service-logs/<string:service>")
+@flask_permissions_owner
 def bento_service(service: str):
     return _logs_service_endpoint(SERVICE_LOGS_DICT, service, "service-logs")
 
 
-@flask_permissions_owner
 @application.route("/system-logs/<string:service>/<string:log>")
+@flask_permissions_owner
 def bento_service_log(service: str, log: str):
     return _log_bytes_endpoint(SERVICE_LOGS_DICT, service, log)
 
