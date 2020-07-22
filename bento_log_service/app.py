@@ -101,9 +101,10 @@ def _log_to_endpoint_value(s, log_base_path: str):
     # TODO: Proper log URL
     return {
         **s,
-        "logs": [{
+        "logs": {
             log: urljoin(SERVICE_URL, f"{STARTING_SLASH.sub('', log_base_path)}/{s['service']}/{log}")
-        } for log in s["logs"]]
+            for log in s["logs"]
+        }
     }
 
 
