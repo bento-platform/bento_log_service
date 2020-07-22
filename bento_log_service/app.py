@@ -1,5 +1,6 @@
 import bento_log_service
 import os
+import re
 import sys
 
 from bento_lib.auth.flask_decorators import flask_permissions_owner
@@ -15,7 +16,7 @@ from urllib.parse import urljoin
 from werkzeug.exceptions import BadRequest, NotFound
 
 
-TIMEOUT = 1
+STARTING_SLASH = re.compile("^/")
 
 
 SERVICE_ARTIFACT = "log-service"
@@ -100,7 +101,9 @@ def _log_to_endpoint_value(s, log_base_path: str):
     # TODO: Proper log URL
     return {
         **s,
-        "logs": [{log: urljoin(SERVICE_URL, f"{log_base_path}/{s['service']}/{log}")} for log in s["logs"]]
+        "logs": [{
+            log: urljoin(SERVICE_URL, f"{STARTING_SLASH.sub('', log_base_path)}/{s['service']}/{log}")
+        } for log in s["logs"]]
     }
 
 
