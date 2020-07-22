@@ -11,12 +11,12 @@ from bento_lib.responses.flask_errors import (
     flask_bad_request_error,
     flask_not_found_error,
 )
-from flask import Flask, json, jsonify, send_file
+from flask import Flask, json, jsonify
 from urllib.parse import urljoin
 from werkzeug.exceptions import BadRequest, NotFound
 
 
-STARTING_SLASH = re.compile("^/")
+STARTING_SLASH = re.compile(r"^/")
 
 
 SERVICE_ARTIFACT = "log-service"
@@ -40,7 +40,7 @@ SERVICE_INFO = {
 CHORD_URL = os.environ.get("CHORD_URL", "http://127.0.0.1:5000/")  # Own node's URL
 SERVICE_BASE_PATH = os.environ.get("SERVICE_URL_BASE_PATH", "/")
 
-SERVICE_URL = urljoin(CHORD_URL, SERVICE_BASE_PATH)
+SERVICE_URL = urljoin(CHORD_URL, STARTING_SLASH.sub("", SERVICE_BASE_PATH))
 
 CHORD_SERVICES_PATH = os.environ.get("CHORD_SERVICES", "chord_services.json")
 with open(CHORD_SERVICES_PATH, "r") as f:
@@ -48,9 +48,14 @@ with open(CHORD_SERVICES_PATH, "r") as f:
 
 SERVICE_LOGS_TEMPLATE = "/chord/tmp/logs/{service_artifact}/"
 
+LINES_LIMIT = 1000
+
 
 application = Flask(__name__)
-application.config.from_mapping(CHORD_SERVICES=CHORD_SERVICES_PATH)
+application.config.from_mapping(
+    CHORD_SERVICES=CHORD_SERVICES_PATH,
+    LINES_LIMIT=LINES_LIMIT,
+)
 
 # Generic catch-all
 application.register_error_handler(Exception, flask_error_wrap_with_traceback(flask_internal_server_error,
@@ -104,7 +109,7 @@ def _log_to_endpoint_value(s, log_base_path: str):
     return {
         **s,
         "logs": {
-            log: urljoin(SERVICE_URL, f"{STARTING_SLASH.sub('', log_base_path)}/{s['service']}/{log}")
+            log: urljoin(SERVICE_URL, f"{log_base_path}/{s['service']}/{log}")
             for log in s["logs"]
         }
     }
@@ -128,7 +133,16 @@ def _log_bytes_endpoint(log_dict: dict, service: str, log: str):
     file_path = log_dict[service]["logs"][log]
 
     try:
-        return send_file(file_path, mimetype="text/plain", as_attachment=False)
+        lines = []
+
+        with open(file_path, "r") as lf:
+            for line in lf:
+                lines.append(line)
+                if len(lines) > LINES_LIMIT:
+                    lines = lines[1:]
+
+        return application.response_class("".join(lines), status=200, mimetype="text/plain")
+
     except FileNotFoundError:
         print(f"[{SERVICE_NAME}] [ERROR] Could not find file: '{file_path}'", flush=True, file=sys.stderr)
         return application.response_class(status=500)
@@ -164,7 +178,7 @@ def bento_service(service: str):
     return _logs_service_endpoint(SERVICE_LOGS_DICT, service, "service-logs")
 
 
-@application.route("/system-logs/<string:service>/<string:log>")
+@application.route("/service-logs/<string:service>/<string:log>")
 @flask_permissions_owner
 def bento_service_log(service: str, log: str):
     return _log_bytes_endpoint(SERVICE_LOGS_DICT, service, log)
