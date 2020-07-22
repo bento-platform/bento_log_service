@@ -79,8 +79,10 @@ SYSTEM_LOGS_DICT = {s["service"]: s for s in SYSTEM_LOGS}
 
 
 def _get_service_files(service_artifact):
-    (_, _, files) = next(os.walk(SERVICE_LOGS_TEMPLATE.format(service_artifact=service_artifact)), ((), (), ()))
-    return files
+    """
+    Returns all log files in the service's log directory.
+    """
+    return next(os.walk(SERVICE_LOGS_TEMPLATE.format(service_artifact=service_artifact)), ((), (), ()))[2]
 
 
 SERVICE_LOGS = [
