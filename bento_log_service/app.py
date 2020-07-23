@@ -83,19 +83,21 @@ SYSTEM_LOGS = [
 SYSTEM_LOGS_DICT = {s["service"]: s for s in SYSTEM_LOGS}
 
 
-def _get_service_files(service_artifact):
+def _get_service_dir_and_files(service_artifact):
     """
-    Returns all log files in the service's log directory.
+    Returns the service's log directory and all log files in it.
     """
-    return next(os.walk(SERVICE_LOGS_TEMPLATE.format(service_artifact=service_artifact)), ((), (), ()))[2]
+    directory = SERVICE_LOGS_TEMPLATE.format(service_artifact=service_artifact)
+    return directory, next(os.walk(directory), ((), (), ()))[2]
 
 
 SERVICE_LOGS = [
     {
         "service": s["type"]["artifact"],
         "logs": {
-            os.path.basename(fp): fp
-            for fp in _get_service_files(s["type"]["artifact"])
+            fn: os.path.join(d, fn)
+            for d, file_list in (_get_service_dir_and_files(s["type"]["artifact"]),)  # TODO: Use assignment exprs
+            for fn in file_list
         },
     }
     for s in CHORD_SERVICES
