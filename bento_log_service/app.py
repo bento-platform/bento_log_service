@@ -40,7 +40,9 @@ SERVICE_INFO = {
 CHORD_URL = os.environ.get("CHORD_URL", "http://127.0.0.1:5000/")  # Own node's URL
 SERVICE_BASE_PATH = os.environ.get("SERVICE_URL_BASE_PATH", "/")
 
-SERVICE_URL = urljoin(CHORD_URL, STARTING_SLASH.sub("", SERVICE_BASE_PATH))
+SERVICE_URL = urljoin(CHORD_URL, STARTING_SLASH.sub("", SERVICE_BASE_PATH + "/"))
+
+print(f"[{SERVICE_NAME}] Using service url: {SERVICE_URL}", flush=True)
 
 CHORD_SERVICES_PATH = os.environ.get("CHORD_SERVICES", "chord_services.json")
 with open(CHORD_SERVICES_PATH, "r") as f:
